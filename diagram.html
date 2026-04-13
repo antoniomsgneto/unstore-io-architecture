@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>unstore.io — System Architecture Diagram</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #0d1117;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 1400px;
+    width: 100%;
+    padding: 24px;
+  }
+  .svg-wrapper {
+    background: #f8fafc;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  .svg-wrapper svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="svg-wrapper">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 960" font-family="Inter, -apple-system, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#f1f5f9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="960" fill="url(#bgGrad)"/>
+
+  <!-- Header bar -->
+  <rect x="0" y="0" width="1200" height="52" fill="#0f172a"/>
+  <text x="32" y="33" fill="#ffffff" font-size="20" font-weight="700">unstore.io</text>
+  <text x="170" y="33" fill="#94a3b8" font-size="14">System Architecture</text>
+  <text x="1168" y="33" fill="#64748b" font-size="12" text-anchor="end">April 2026</text>
+
+  <!-- =============================== -->
+  <!-- DATA INGESTION LAYER            -->
+  <!-- =============================== -->
+  <rect x="20" y="68" width="1160" height="310" rx="8" fill="#fffbeb" stroke="#fbbf24" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="40" y="90" fill="#92400e" font-size="11" font-weight="700" letter-spacing="1.5">DATA INGESTION LAYER</text>
+
+  <!-- Sources label -->
+  <text x="98" y="118" fill="#78716c" font-size="10" font-weight="600" text-anchor="middle" letter-spacing="1">SOURCES</text>
+
+  <!-- Softonic box -->
+  <rect x="30" y="130" width="136" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="98" y="152" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">Softonic</text>
+  <text x="98" y="168" fill="#64748b" font-size="10" text-anchor="middle">PC apps (primary)</text>
+
+  <!-- Uptodown box -->
+  <rect x="30" y="188" width="136" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="98" y="210" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">Uptodown</text>
+  <text x="98" y="226" fill="#64748b" font-size="10" text-anchor="middle">PC apps (gap-fill)</text>
+
+  <!-- Aptoide box -->
+  <rect x="30" y="246" width="136" height="48" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
+  <text x="98" y="268" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">Aptoide</text>
+  <text x="98" y="284" fill="#7c3aed" font-size="10" text-anchor="middle">Internal API</text>
+
+  <!-- Connector lines from sources -->
+  <line x1="166" y1="154" x2="218" y2="176" stroke="#d97706" stroke-width="1.5"/>
+  <line x1="166" y1="212" x2="218" y2="196" stroke="#d97706" stroke-width="1.5"/>
+  <line x1="166" y1="270" x2="218" y2="264" stroke="#7c3aed" stroke-width="1.5"/>
+
+  <!-- PC Scraper -->
+  <rect x="218" y="142" width="156" height="66" rx="6" fill="#ffffff" stroke="#d97706" stroke-width="1.5"/>
+  <text x="236" y="164" fill="#92400e" font-size="9" font-weight="700" letter-spacing="1">SCRAPER</text>
+  <text x="296" y="182" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">PC Scraper</text>
+  <text x="296" y="198" fill="#64748b" font-size="10" text-anchor="middle">httpx + BS4 + lxml</text>
+
+  <!-- Android Pipeline -->
+  <rect x="218" y="226" width="156" height="66" rx="6" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="236" y="248" fill="#5b21b6" font-size="9" font-weight="700" letter-spacing="1">PIPELINE</text>
+  <text x="296" y="266" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">Android Pipeline</text>
+  <text x="296" y="282" fill="#64748b" font-size="10" text-anchor="middle">Aptoide Internal API</text>
+
+  <!-- Lines from scrapers to content pipeline -->
+  <line x1="374" y1="180" x2="424" y2="210" stroke="#d97706" stroke-width="1.5"/>
+  <line x1="374" y1="260" x2="424" y2="238" stroke="#7c3aed" stroke-width="1.5"/>
+
+  <!-- Content Pipeline (LLM Rewriter) -->
+  <rect x="424" y="186" width="172" height="66" rx="6" fill="#ffffff" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="442" y="208" fill="#9d174d" font-size="9" font-weight="700" letter-spacing="1">CONTENT</text>
+  <text x="510" y="226" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">LLM Rewriter</text>
+  <text x="510" y="242" fill="#64748b" font-size="10" text-anchor="middle">GPT-4o-mini / Haiku</text>
+
+  <!-- VirusTotal -->
+  <rect x="218" y="310" width="156" height="38" rx="6" fill="#ffffff" stroke="#ef4444" stroke-width="1"/>
+  <text x="296" y="334" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">VirusTotal API</text>
+
+  <!-- Image Pipeline -->
+  <rect x="424" y="270" width="172" height="38" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="1"/>
+  <text x="510" y="294" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">Image Pipeline</text>
+
+  <!-- Line from content pipeline to PostgreSQL -->
+  <line x1="596" y1="220" x2="660" y2="200" stroke="#ec4899" stroke-width="1.5"/>
+
+  <!-- Line from VirusTotal to PostgreSQL -->
+  <line x1="374" y1="329" x2="660" y2="220" stroke="#ef4444" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- Line from Image Pipeline to R2 -->
+  <line x1="596" y1="289" x2="900" y2="255" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- PostgreSQL -->
+  <rect x="660" y="140" width="190" height="116" rx="8" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+  <rect x="660" y="140" width="190" height="28" rx="8" fill="#eff6ff"/>
+  <rect x="660" y="160" width="190" height="8" fill="#eff6ff"/>
+  <text x="755" y="160" fill="#1e40af" font-size="11" font-weight="700" text-anchor="middle">PostgreSQL (Supabase)</text>
+  <text x="680" y="188" fill="#475569" font-size="10">apps</text>
+  <text x="680" y="204" fill="#475569" font-size="10">app_versions</text>
+  <text x="680" y="220" fill="#475569" font-size="10">app_screenshots</text>
+  <text x="680" y="236" fill="#475569" font-size="10">categories</text>
+  <text x="780" y="188" fill="#475569" font-size="10">download_events</text>
+  <text x="780" y="204" fill="#94a3b8" font-size="9">+ indexes</text>
+
+  <!-- Cloudflare R2 -->
+  <rect x="900" y="140" width="160" height="64" rx="6" fill="#ffffff" stroke="#f97316" stroke-width="1.5"/>
+  <text x="980" y="164" fill="#c2410c" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="1">STORAGE</text>
+  <text x="980" y="182" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">Cloudflare R2</text>
+  <text x="980" y="196" fill="#64748b" font-size="10" text-anchor="middle">PC exes, icons, screenshots</text>
+
+  <!-- Redis -->
+  <rect x="900" y="218" width="160" height="48" rx="6" fill="#ffffff" stroke="#ef4444" stroke-width="1"/>
+  <text x="980" y="242" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">Redis (Upstash)</text>
+  <text x="980" y="258" fill="#64748b" font-size="10" text-anchor="middle">API cache layer</text>
+
+  <!-- =============================== -->
+  <!-- SERVICE LAYER                   -->
+  <!-- =============================== -->
+  <rect x="20" y="392" width="1160" height="172" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="40" y="414" fill="#1e40af" font-size="11" font-weight="700" letter-spacing="1.5">SERVICE LAYER</text>
+
+  <!-- DB to API connector -->
+  <line x1="755" y1="256" x2="755" y2="340" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="755" y1="340" x2="600" y2="340" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="600" y1="340" x2="600" y2="430" stroke="#3b82f6" stroke-width="2"/>
+  <text x="612" y="390" fill="#3b82f6" font-size="9">SQLAlchemy async</text>
+
+  <!-- FastAPI main box -->
+  <rect x="330" y="430" width="530" height="114" rx="8" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+  <rect x="330" y="430" width="530" height="26" rx="8" fill="#eff6ff"/>
+  <rect x="330" y="448" width="530" height="8" fill="#eff6ff"/>
+  <text x="595" y="450" fill="#1e40af" font-size="13" font-weight="700" text-anchor="middle">FastAPI Backend — api.unstore.io</text>
+
+  <!-- Public API group -->
+  <rect x="346" y="464" width="156" height="68" rx="4" fill="#f8fafc"/>
+  <text x="424" y="480" fill="#1e40af" font-size="10" font-weight="700" text-anchor="middle">PUBLIC API</text>
+  <text x="424" y="496" fill="#475569" font-size="9" text-anchor="middle">GET /api/apps/{slug}</text>
+  <text x="424" y="508" fill="#475569" font-size="9" text-anchor="middle">GET /api/categories/</text>
+  <text x="424" y="520" fill="#475569" font-size="9" text-anchor="middle">GET /api/search?q=</text>
+
+  <!-- SSR Data Endpoints group -->
+  <rect x="514" y="464" width="156" height="68" rx="4" fill="#f0fdf4"/>
+  <text x="592" y="480" fill="#166534" font-size="10" font-weight="700" text-anchor="middle">SSR DATA</text>
+  <text x="592" y="496" fill="#475569" font-size="9" text-anchor="middle">GET /api/ssg/all-apps</text>
+  <text x="592" y="508" fill="#475569" font-size="9" text-anchor="middle">GET /api/ssg/sitemap-data</text>
+  <text x="592" y="520" fill="#475569" font-size="9" text-anchor="middle">GET /api/ssg/categories</text>
+
+  <!-- Admin + Download group -->
+  <rect x="682" y="464" width="164" height="68" rx="4" fill="#fef2f2"/>
+  <text x="764" y="480" fill="#991b1b" font-size="10" font-weight="700" text-anchor="middle">ADMIN + DOWNLOAD</text>
+  <text x="764" y="496" fill="#475569" font-size="9" text-anchor="middle">POST /admin/apps</text>
+  <text x="764" y="508" fill="#475569" font-size="9" text-anchor="middle">GET /api/download/{slug}</text>
+  <text x="764" y="520" fill="#475569" font-size="9" text-anchor="middle">POST /admin/build/trigger</text>
+
+  <!-- Redis to API dashed line -->
+  <line x1="900" y1="248" x2="862" y2="470" stroke="#ef4444" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- Meilisearch -->
+  <rect x="44" y="440" width="156" height="50" rx="6" fill="#ffffff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="122" y="464" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">Meilisearch</text>
+  <text x="122" y="478" fill="#6366f1" font-size="10" text-anchor="middle">Search index</text>
+
+  <!-- Meilisearch to FastAPI line -->
+  <line x1="200" y1="465" x2="330" y2="480" stroke="#6366f1" stroke-width="1.5"/>
+
+  <!-- GitHub Actions -->
+  <rect x="44" y="500" width="156" height="50" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+  <text x="122" y="524" fill="#1e293b" font-size="12" font-weight="600" text-anchor="middle">GitHub Actions</text>
+  <text x="122" y="540" fill="#64748b" font-size="10" text-anchor="middle">CI/CD + Deploy triggers</text>
+
+  <!-- GH Actions to FastAPI dashed line -->
+  <line x1="200" y1="525" x2="330" y2="510" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- Hosting label -->
+  <rect x="890" y="450" width="150" height="40" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+  <text x="965" y="470" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">Railway / Fly.io</text>
+  <text x="965" y="484" fill="#64748b" font-size="9" text-anchor="middle">Docker container</text>
+
+  <line x1="860" y1="476" x2="890" y2="470" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- =============================== -->
+  <!-- PRESENTATION LAYER              -->
+  <!-- =============================== -->
+  <rect x="20" y="578" width="1160" height="200" rx="8" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="40" y="600" fill="#065f46" font-size="11" font-weight="700" letter-spacing="1.5">PRESENTATION LAYER</text>
+
+  <!-- API fetch connector from FastAPI to Next.js -->
+  <line x1="520" y1="544" x2="520" y2="570" stroke="#10b981" stroke-width="2"/>
+  <line x1="520" y1="570" x2="340" y2="570" stroke="#10b981" stroke-width="2"/>
+  <line x1="340" y1="570" x2="340" y2="618" stroke="#10b981" stroke-width="2"/>
+  <text x="400" y="566" fill="#10b981" font-size="9" font-weight="600">SSR / ISR fetch</text>
+
+  <!-- Next.js App -->
+  <rect x="170" y="618" width="200" height="140" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="2"/>
+  <rect x="170" y="618" width="200" height="26" rx="8" fill="#ecfdf5"/>
+  <rect x="170" y="636" width="200" height="8" fill="#ecfdf5"/>
+  <text x="270" y="638" fill="#065f46" font-size="13" font-weight="700" text-anchor="middle">Next.js (App Router)</text>
+  <text x="270" y="666" fill="#475569" font-size="10" text-anchor="middle">SSR + ISR page rendering</text>
+  <text x="270" y="684" fill="#475569" font-size="9" text-anchor="middle">Tailwind CSS</text>
+  <text x="270" y="700" fill="#475569" font-size="9" text-anchor="middle">React Server Components</text>
+  <text x="270" y="716" fill="#475569" font-size="9" text-anchor="middle">Schema.org JSON-LD</text>
+  <text x="270" y="732" fill="#475569" font-size="9" text-anchor="middle">Dynamic XML Sitemaps</text>
+
+  <!-- Arrow from Next.js to Page Routes -->
+  <line x1="370" y1="688" x2="420" y2="688" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="418,684 426,688 418,692" fill="#10b981"/>
+
+  <!-- Page Routes box -->
+  <rect x="430" y="618" width="300" height="140" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="1.5"/>
+  <text x="446" y="642" fill="#065f46" font-size="11" font-weight="700">PAGE ROUTES (1,000+)</text>
+  <text x="446" y="668" fill="#1e293b" font-size="11" font-weight="600">/[app-slug]/</text>
+  <text x="620" y="668" fill="#64748b" font-size="10">The money page (ISR)</text>
+  <text x="446" y="688" fill="#1e293b" font-size="11">/[app-slug]/pc/</text>
+  <text x="620" y="688" fill="#64748b" font-size="10">Windows variant (ISR)</text>
+  <text x="446" y="708" fill="#1e293b" font-size="11">/[app-slug]/download/</text>
+  <text x="630" y="708" fill="#ef4444" font-size="10">noindex, ad slot</text>
+  <text x="446" y="728" fill="#1e293b" font-size="11">/category/[slug]/</text>
+  <text x="620" y="728" fill="#64748b" font-size="10">Internal linking (ISR)</text>
+  <text x="446" y="748" fill="#1e293b" font-size="11">/</text>
+  <text x="460" y="748" fill="#64748b" font-size="10">Search + trending grid</text>
+
+  <!-- Deploy line from Page Routes to Vercel -->
+  <line x1="730" y1="672" x2="776" y2="672" stroke="#000000" stroke-width="1.5"/>
+  <polygon points="774,668 782,672 774,676" fill="#000000"/>
+  <text x="748" y="664" fill="#000000" font-size="9">deploy</text>
+
+  <!-- Vercel Edge Network -->
+  <rect x="786" y="618" width="186" height="74" rx="8" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="879" y="644" fill="#555555" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="1">EDGE NETWORK</text>
+  <text x="879" y="664" fill="#000000" font-size="13" font-weight="600" text-anchor="middle">Vercel</text>
+  <text x="879" y="682" fill="#64748b" font-size="10" text-anchor="middle">unstore.io (global edge)</text>
+
+  <!-- Runtime download redirect (dashed, from Vercel to FastAPI) -->
+  <line x1="879" y1="692" x2="879" y2="570" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="879" y1="570" x2="770" y2="544" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="892" y="586" fill="#3b82f6" font-size="8">runtime: download</text>
+  <text x="892" y="598" fill="#3b82f6" font-size="8">redirect + tracking</text>
+
+  <!-- AdSense -->
+  <rect x="786" y="704" width="186" height="44" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+  <text x="879" y="726" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">Google AdSense</text>
+  <text x="879" y="742" fill="#64748b" font-size="10" text-anchor="middle">Download interstitial only</text>
+
+  <!-- User Flow box -->
+  <rect x="1014" y="618" width="146" height="130" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.5"/>
+  <text x="1087" y="642" fill="#0f172a" font-size="10" font-weight="700" text-anchor="middle" letter-spacing="1">USER FLOW</text>
+  <text x="1087" y="672" fill="#3b82f6" font-size="10" font-weight="600" text-anchor="middle">Google SERP</text>
+  <text x="1087" y="690" fill="#475569" font-size="18" text-anchor="middle">↓</text>
+  <text x="1087" y="706" fill="#10b981" font-size="10" font-weight="600" text-anchor="middle">App Detail Page</text>
+  <text x="1087" y="724" fill="#475569" font-size="18" text-anchor="middle">↓</text>
+  <text x="1087" y="740" fill="#f59e0b" font-size="10" font-weight="600" text-anchor="middle">Download</text>
+
+  <!-- =============================== -->
+  <!-- MONITORING LAYER                -->
+  <!-- =============================== -->
+  <rect x="20" y="794" width="1160" height="70" rx="8" fill="#eef2ff" stroke="#a5b4fc" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="40" y="816" fill="#3730a3" font-size="11" font-weight="700" letter-spacing="1.5">MONITORING &amp; ANALYTICS</text>
+
+  <rect x="44" y="828" width="130" height="28" rx="4" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="109" y="847" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">GA4</text>
+
+  <rect x="188" y="828" width="176" height="28" rx="4" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="276" y="847" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">Google Search Console</text>
+
+  <rect x="378" y="828" width="176" height="28" rx="4" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="466" y="847" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">Bing Webmaster Tools</text>
+
+  <rect x="568" y="828" width="120" height="28" rx="4" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="628" y="847" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">Sentry</text>
+
+  <rect x="702" y="828" width="140" height="28" rx="4" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="772" y="847" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">UptimeRobot</text>
+
+  <rect x="856" y="828" width="150" height="28" rx="4" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="931" y="847" fill="#1e293b" font-size="11" font-weight="600" text-anchor="middle">Cloudflare DNS</text>
+
+  <!-- Legend at bottom -->
+  <text x="40" y="910" fill="#94a3b8" font-size="10">━━ direct connection</text>
+  <text x="200" y="910" fill="#94a3b8" font-size="10">╌╌ async / dashed connection</text>
+  <line x1="40" y1="926" x2="70" y2="926" stroke="#d97706" stroke-width="2"/>
+  <text x="78" y="930" fill="#94a3b8" font-size="10">PC data</text>
+  <line x1="140" y1="926" x2="170" y2="926" stroke="#7c3aed" stroke-width="2"/>
+  <text x="178" y="930" fill="#94a3b8" font-size="10">Android data</text>
+  <line x1="260" y1="926" x2="290" y2="926" stroke="#ec4899" stroke-width="2"/>
+  <text x="298" y="930" fill="#94a3b8" font-size="10">Content pipeline</text>
+  <line x1="410" y1="926" x2="440" y2="926" stroke="#3b82f6" stroke-width="2"/>
+  <text x="448" y="930" fill="#94a3b8" font-size="10">API / DB</text>
+  <line x1="510" y1="926" x2="540" y2="926" stroke="#10b981" stroke-width="2"/>
+  <text x="548" y="930" fill="#94a3b8" font-size="10">Frontend / SSR</text>
+  <line x1="650" y1="926" x2="680" y2="926" stroke="#000000" stroke-width="2"/>
+  <text x="688" y="930" fill="#94a3b8" font-size="10">Edge / Deploy</text>
+
+</svg></div>
+</div>
+</body>
+</html>
