@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>unstore.io — Platform Architecture</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    margin: 0;
+    padding: 24px;
+  }
+  h1 { color: #f0f6fc; font-size: 1.6rem; margin-bottom: 4px; }
+  h2 { color: #8b949e; font-size: 1rem; font-weight: 400; margin-top: 0; }
+  h3 { color: #f0f6fc; font-size: 1.1rem; margin: 32px 0 8px; }
+  .diagram-container {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 24px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  .section { margin-top: 40px; }
+  .legend {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin: 16px 0 24px; padding: 12px 16px;
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    font-size: 0.85rem;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 14px; height: 14px; border-radius: 3px; }
+  .note { color: #8b949e; font-size: 0.82rem; margin: 4px 0 16px; }
+  .tech-table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px;
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden;
+  }
+  .tech-table th {
+    text-align: left; padding: 10px 14px; color: #f0f6fc;
+    background: #21262d; border-bottom: 2px solid #30363d;
+  }
+  .tech-table td {
+    padding: 8px 14px; border-bottom: 1px solid #21262d; vertical-align: top;
+  }
+  .tech-table td:first-child { font-weight: 600; white-space: nowrap; }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 0.75rem; font-weight: 500; margin: 1px 2px;
+  }
+  .tag-py { background: #3572A5; color: #fff; }
+  .tag-ts { background: #3178c6; color: #fff; }
+  .tag-infra { background: #f0883e; color: #0d1117; }
+  .tag-db { background: #336791; color: #fff; }
+  .tag-api { background: #3fb950; color: #0d1117; }
+</style>
+</head>
+<body>
+
+<h1>unstore.io — Platform Architecture</h1>
+<h2>PC & Android Software Download Platform | Astro SSG + FastAPI + Supabase + Cloudflare</h2>
+
+<div class="legend">
+  <div class="legend-item"><div class="swatch" style="background:#f0883e"></div> External Data Sources</div>
+  <div class="legend-item"><div class="swatch" style="background:#a371f7"></div> Data Pipelines</div>
+  <div class="legend-item"><div class="swatch" style="background:#f778ba"></div> Security (VirusTotal)</div>
+  <div class="legend-item"><div class="swatch" style="background:#336791"></div> Storage</div>
+  <div class="legend-item"><div class="swatch" style="background:#58a6ff"></div> Backend API</div>
+  <div class="legend-item"><div class="swatch" style="background:#d2a8ff"></div> Frontend</div>
+  <div class="legend-item"><div class="swatch" style="background:#3fb950"></div> CDN / Hosting</div>
+  <div class="legend-item"><div class="swatch" style="background:#7ee787"></div> Monitoring</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- MAIN ARCHITECTURE DIAGRAM              -->
+<!-- ════════════════════════════════════════ -->
+<h3>System Overview</h3>
+<div class="diagram-container">
+<pre class="mermaid">
+%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '13px'}}}%%
+flowchart TB
+
+  subgraph SOURCES["External Data Sources"]
+    direction LR
+    SOFT["Softonic<br/><i>PC apps (primary)</i>"]
+    UPTO["Uptodown<br/><i>PC apps (secondary)</i>"]
+    APTO["Aptoide Internal API<br/><i>Android apps</i>"]
+  end
+
+  subgraph PIPELINES["Data Pipelines (Python)"]
+    direction LR
+    subgraph PCSCRAPER["PC Scraper"]
+      CRAWL["URL Discovery<br/><i>Category crawl</i>"]
+      DETAIL["Detail Extraction<br/><i>Metadata + images</i>"]
+      BINARY["Binary Download<br/><i>Hash + R2 upload</i>"]
+    end
+    subgraph ANDROID["Android Pipeline"]
+      INGEST["API Ingestion<br/><i>Top 5K apps</i>"]
+      CATMAP["Category Mapping<br/><i>Cross-platform dedup</i>"]
+    end
+    subgraph CONTENT["Content Pipeline"]
+      LLM["LLM Rewriting<br/><i>GPT-4o-mini / Claude Haiku</i>"]
+      QA["Quality Checks<br/><i>Word count, similarity, lang</i>"]
+    end
+  end
+
+  subgraph SECURITY["VirusTotal Scanning"]
+    VTSCAN["VT Scanner<br/><i>Hash lookup + file submit</i>"]
+    VTAPI_EXT["VirusTotal API v3"]
+  end
+
+  subgraph STORAGE["Storage Layer"]
+    direction LR
+    PG[("Supabase PostgreSQL<br/><i>apps, versions, categories,<br/>scans, snapshots</i>")]
+    R2[("Cloudflare R2<br/><i>Binaries, icons,<br/>screenshots (WebP)</i>")]
+    MEILI[("Meilisearch<br/><i>Full-text search index</i>")]
+    REDIS[("Upstash Redis<br/><i>API response cache</i>")]
+  end
+
+  subgraph BACKEND["FastAPI Backend — api.unstore.io"]
+    direction LR
+    PUBLIC["Public API<br/><i>/api/apps, /categories,<br/>/search, /trending</i>"]
+    DOWNLOAD["Download Redirect<br/><i>/api/download/{slug}<br/>302 → R2 / CDN</i>"]
+    SSG_EP["SSG Endpoints<br/><i>/api/ssg/all-apps,<br/>sitemap-data</i>"]
+    ADMIN["Admin API<br/><i>/admin/apps, /build,<br/>/content, /virustotal</i>"]
+  end
+
+  subgraph FRONTEND["Astro SSG Frontend — unstore.io"]
+    direction LR
+    HOME["Homepage<br/><i>Search, trending,<br/>categories</i>"]
+    APPPAGE["App Detail Page<br/><i>Metadata, screenshots,<br/>VT badge, download</i>"]
+    CATPAGE["Category Pages<br/><i>Filters, sort,<br/>pagination</i>"]
+    DLPAGE["Download Interstitial<br/><i>5s countdown,<br/>AdSense unit</i>"]
+    PCPAGE["PC Variant Page<br/><i>/app-slug/pc/</i>"]
+  end
+
+  subgraph DEPLOY["Deployment & CDN"]
+    direction LR
+    GHA["GitHub Actions<br/><i>Daily build 03:00 UTC</i>"]
+    CF_PAGES["Cloudflare Pages<br/><i>Static hosting</i>"]
+    CF_CDN["Cloudflare CDN<br/><i>cdn.unstore.io</i>"]
+    RAILWAY["Railway / Fly.io<br/><i>API hosting</i>"]
+  end
+
+  subgraph MONITORING["Monitoring & Analytics"]
+    direction LR
+    SENTRY["Sentry<br/><i>Errors + stack traces</i>"]
+    UPTIME["UptimeRobot<br/><i>5-min checks</i>"]
+    GSC["Google Search Console<br/><i>Indexing + sitemaps</i>"]
+    CFA["Cloudflare Analytics<br/><i>Pageviews, clicks</i>"]
+  end
+
+  subgraph USERS["Users"]
+    VISITOR(["Visitor<br/><i>Organic search / direct</i>"])
+    GOOGLEBOT(["Googlebot<br/><i>Crawl + index</i>"])
+  end
+
+  %% ═══ DATA FLOW ═══
+
+  SOFT --> CRAWL
+  UPTO --> CRAWL
+  CRAWL --> DETAIL
+  DETAIL --> BINARY
+  APTO --> INGEST
+  INGEST --> CATMAP
+
+  DETAIL --> PG
+  BINARY --> R2
+  BINARY --> VTSCAN
+  INGEST --> PG
+  CATMAP --> PG
+
+  PG --> LLM
+  LLM --> QA
+  QA --> PG
+
+  VTSCAN --> VTAPI_EXT
+  VTSCAN --> PG
+
+  PG --> PUBLIC
+  PG --> SSG_EP
+  PG --> DOWNLOAD
+  PG --> ADMIN
+  MEILI --> PUBLIC
+  REDIS --> PUBLIC
+  R2 --> DOWNLOAD
+
+  SSG_EP --> GHA
+  GHA --> CF_PAGES
+  ADMIN -.-> GHA
+
+  CF_PAGES --> HOME
+  CF_PAGES --> APPPAGE
+  CF_PAGES --> CATPAGE
+  CF_PAGES --> DLPAGE
+  CF_PAGES --> PCPAGE
+
+  RAILWAY --> BACKEND
+
+  VISITOR --> CF_CDN
+  CF_CDN --> FRONTEND
+  DLPAGE --> DOWNLOAD
+  GOOGLEBOT --> CF_CDN
+
+  BACKEND --> SENTRY
+  FRONTEND --> SENTRY
+  UPTIME --> CF_CDN
+  UPTIME --> RAILWAY
+  CF_CDN --> GSC
+  FRONTEND --> CFA
+
+  PG --> MEILI
+
+  %% ═══ STYLES ═══
+
+  style SOURCES fill:#f0883e,stroke:#d97706,color:#0d1117
+  style SOFT fill:#fff3e0,stroke:#f0883e,color:#0d1117
+  style UPTO fill:#fff3e0,stroke:#f0883e,color:#0d1117
+  style APTO fill:#fff3e0,stroke:#f0883e,color:#0d1117
+
+  style PIPELINES fill:#a371f7,stroke:#8957e5,color:#0d1117
+  style PCSCRAPER fill:#ede9fe,stroke:#a371f7,color:#0d1117
+  style ANDROID fill:#ede9fe,stroke:#a371f7,color:#0d1117
+  style CONTENT fill:#ede9fe,stroke:#a371f7,color:#0d1117
+  style CRAWL fill:#ddd6fe,stroke:#a371f7,color:#0d1117
+  style DETAIL fill:#ddd6fe,stroke:#a371f7,color:#0d1117
+  style BINARY fill:#ddd6fe,stroke:#a371f7,color:#0d1117
+  style INGEST fill:#ddd6fe,stroke:#a371f7,color:#0d1117
+  style CATMAP fill:#ddd6fe,stroke:#a371f7,color:#0d1117
+  style LLM fill:#ddd6fe,stroke:#a371f7,color:#0d1117
+  style QA fill:#ddd6fe,stroke:#a371f7,color:#0d1117
+
+  style SECURITY fill:#f778ba,stroke:#db61a2,color:#0d1117
+  style VTSCAN fill:#fce7f3,stroke:#f778ba,color:#0d1117
+  style VTAPI_EXT fill:#fce7f3,stroke:#f778ba,color:#0d1117
+
+  style STORAGE fill:#1e3a5f,stroke:#336791,color:#fff
+  style PG fill:#336791,stroke:#1e3a5f,color:#fff
+  style R2 fill:#336791,stroke:#1e3a5f,color:#fff
+  style MEILI fill:#336791,stroke:#1e3a5f,color:#fff
+  style REDIS fill:#336791,stroke:#1e3a5f,color:#fff
+
+  style BACKEND fill:#58a6ff,stroke:#1f6feb,color:#0d1117
+  style PUBLIC fill:#dbeafe,stroke:#58a6ff,color:#0d1117
+  style DOWNLOAD fill:#dbeafe,stroke:#58a6ff,color:#0d1117
+  style SSG_EP fill:#dbeafe,stroke:#58a6ff,color:#0d1117
+  style ADMIN fill:#dbeafe,stroke:#58a6ff,color:#0d1117
+
+  style FRONTEND fill:#d2a8ff,stroke:#a371f7,color:#0d1117
+  style HOME fill:#ede9fe,stroke:#d2a8ff,color:#0d1117
+  style APPPAGE fill:#ede9fe,stroke:#d2a8ff,color:#0d1117
+  style CATPAGE fill:#ede9fe,stroke:#d2a8ff,color:#0d1117
+  style DLPAGE fill:#ede9fe,stroke:#d2a8ff,color:#0d1117
+  style PCPAGE fill:#ede9fe,stroke:#d2a8ff,color:#0d1117
+
+  style DEPLOY fill:#3fb950,stroke:#238636,color:#0d1117
+  style GHA fill:#dcfce7,stroke:#3fb950,color:#0d1117
+  style CF_PAGES fill:#dcfce7,stroke:#3fb950,color:#0d1117
+  style CF_CDN fill:#dcfce7,stroke:#3fb950,color:#0d1117
+  style RAILWAY fill:#dcfce7,stroke:#3fb950,color:#0d1117
+
+  style MONITORING fill:#7ee787,stroke:#3fb950,color:#0d1117
+  style SENTRY fill:#dcfce7,stroke:#7ee787,color:#0d1117
+  style UPTIME fill:#dcfce7,stroke:#7ee787,color:#0d1117
+  style GSC fill:#dcfce7,stroke:#7ee787,color:#0d1117
+  style CFA fill:#dcfce7,stroke:#7ee787,color:#0d1117
+
+  style USERS fill:#161b22,stroke:#30363d,color:#c9d1d9
+  style VISITOR fill:#21262d,stroke:#58a6ff,color:#c9d1d9
+  style GOOGLEBOT fill:#21262d,stroke:#58a6ff,color:#c9d1d9
+</pre>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- DATA FLOW DIAGRAM                       -->
+<!-- ════════════════════════════════════════ -->
+<div class="section">
+<h3>Data Flow — From Source to User</h3>
+<p class="note">How an app goes from external source to rendered page.</p>
+<div class="diagram-container">
+<pre class="mermaid">
+%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '12px'}}}%%
+flowchart LR
+  A["1. Scrape / Ingest<br/><i>Softonic, Uptodown,<br/>Aptoide API</i>"] -->|"metadata +<br/>binaries"| B["2. Store<br/><i>PostgreSQL + R2</i>"]
+  B -->|"file hash"| C["3. VirusTotal Scan<br/><i>Hash lookup or<br/>file submission</i>"]
+  C -->|"clean / flagged"| B
+  B -->|"pending_content"| D["4. LLM Rewrite<br/><i>Description +<br/>short_description</i>"]
+  D -->|"status = live"| B
+  B -->|"SSG endpoints"| E["5. Astro Build<br/><i>GitHub Actions<br/>daily 03:00 UTC</i>"]
+  E -->|"static HTML"| F["6. Cloudflare Pages<br/><i>unstore.io</i>"]
+  F -->|"CDN edge"| G["7. User visits page"]
+  G -->|"click download"| H["8. Interstitial<br/><i>5s countdown<br/>+ AdSense</i>"]
+  H -->|"302 redirect"| I["9. Download<br/><i>R2 (PC) or<br/>Aptoide CDN (Android)</i>"]
+
+  style A fill:#f0883e,stroke:#d97706,color:#0d1117
+  style B fill:#336791,stroke:#1e3a5f,color:#fff
+  style C fill:#f778ba,stroke:#db61a2,color:#0d1117
+  style D fill:#a371f7,stroke:#8957e5,color:#fff
+  style E fill:#3fb950,stroke:#238636,color:#0d1117
+  style F fill:#3fb950,stroke:#238636,color:#0d1117
+  style G fill:#58a6ff,stroke:#1f6feb,color:#0d1117
+  style H fill:#d2a8ff,stroke:#a371f7,color:#0d1117
+  style I fill:#336791,stroke:#1e3a5f,color:#fff
+</pre>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- DATABASE SCHEMA                         -->
+<!-- ════════════════════════════════════════ -->
+<div class="section">
+<h3>Database Schema (Supabase PostgreSQL)</h3>
+<div class="diagram-container">
+<pre class="mermaid">
+%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '12px'}}}%%
+erDiagram
+    categories {
+        int id PK
+        string slug UK
+        string name
+        int parent_id FK
+        int app_count
+        timestamp created_at
+    }
+    apps {
+        int id PK
+        string slug UK
+        string name
+        string developer
+        text description_original
+        text description
+        string short_description
+        int category_id FK
+        array platforms
+        string icon_url
+        string license
+        bigint total_downloads
+        string source
+        string source_url
+        string package_name
+        enum status
+        boolean generate_pc_page
+        timestamp content_rewritten_at
+        timestamp created_at
+        timestamp updated_at
+    }
+    app_screenshots {
+        int id PK
+        int app_id FK
+        string url
+        int position
+    }
+    app_versions {
+        int id PK
+        int app_id FK
+        enum platform
+        string version_number
+        date release_date
+        string file_size
+        string min_os
+        string download_url
+        string file_hash
+        boolean virustotal_clean
+        boolean is_current
+        timestamp created_at
+    }
+    virustotal_scans {
+        uuid id PK
+        int app_version_id FK
+        string file_hash
+        timestamp scan_date
+        int total_engines
+        int detections_count
+        array detection_names
+        string permalink
+        enum status
+        jsonb raw_response
+        timestamp created_at
+        timestamp updated_at
+    }
+    download_snapshots {
+        int id PK
+        int app_id FK
+        bigint download_count
+        timestamp scraped_at
+    }
+
+    categories ||--o{ apps : "has"
+    apps ||--o{ app_screenshots : "has"
+    apps ||--o{ app_versions : "has"
+    apps ||--o{ download_snapshots : "tracked by"
+    app_versions ||--o{ virustotal_scans : "scanned by"
+</pre>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- URL STRUCTURE                           -->
+<!-- ════════════════════════════════════════ -->
+<div class="section">
+<h3>URL Structure & Page Types</h3>
+<div class="diagram-container">
+<pre class="mermaid">
+%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '12px'}}}%%
+flowchart LR
+  subgraph PAGES["unstore.io — 5 Page Types (Astro SSG)"]
+    direction TB
+    P1["/ <br/><b>Homepage</b><br/><i>Search bar + 24 trending<br/>+ category chips</i>"]
+    P2["/[app-slug]/<br/><b>App Detail</b><br/><i>Metadata, screenshots,<br/>VT badge, download CTA</i>"]
+    P3["/[app-slug]/pc/<br/><b>PC Variant</b><br/><i>generate_pc_page=true<br/>Windows-focused</i>"]
+    P4["/[app-slug]/download/<br/><b>Download Interstitial</b><br/><i>5s countdown + AdSense<br/>noindex, follow</i>"]
+    P5["/category/[slug]/<br/><b>Category Page</b><br/><i>30 apps/page, filters,<br/>sort, pagination</i>"]
+  end
+
+  subgraph API["api.unstore.io — FastAPI"]
+    direction TB
+    A1["GET /api/apps/{slug}"]
+    A2["GET /api/categories/{slug}/apps"]
+    A3["GET /api/search?q="]
+    A4["GET /api/apps/trending"]
+    A5["GET /api/download/{slug}<br/><i>302 redirect</i>"]
+    A6["GET /api/ssg/all-apps<br/>GET /api/ssg/all-categories<br/>GET /api/ssg/sitemap-data"]
+    A7["POST /admin/build/trigger<br/>POST /admin/content/rewrite"]
+  end
+
+  subgraph SEO["SEO Assets"]
+    direction TB
+    S1["/sitemap-index.xml"]
+    S2["/sitemap-apps.xml"]
+    S3["/sitemap-apps-pc.xml"]
+    S4["/sitemap-categories.xml"]
+    S5["/robots.txt"]
+  end
+
+  P1 -.-> A3
+  P1 -.-> A4
+  P2 -.-> A1
+  P4 --> A5
+  P5 -.-> A2
+
+  style PAGES fill:#ede9fe,stroke:#d2a8ff,color:#0d1117
+  style API fill:#dbeafe,stroke:#58a6ff,color:#0d1117
+  style SEO fill:#dcfce7,stroke:#3fb950,color:#0d1117
+  style P1 fill:#d2a8ff,stroke:#a371f7,color:#0d1117
+  style P2 fill:#d2a8ff,stroke:#a371f7,color:#0d1117
+  style P3 fill:#d2a8ff,stroke:#a371f7,color:#0d1117
+  style P4 fill:#d2a8ff,stroke:#a371f7,color:#0d1117
+  style P5 fill:#d2a8ff,stroke:#a371f7,color:#0d1117
+  style A1 fill:#58a6ff,stroke:#1f6feb,color:#0d1117
+  style A2 fill:#58a6ff,stroke:#1f6feb,color:#0d1117
+  style A3 fill:#58a6ff,stroke:#1f6feb,color:#0d1117
+  style A4 fill:#58a6ff,stroke:#1f6feb,color:#0d1117
+  style A5 fill:#58a6ff,stroke:#1f6feb,color:#0d1117
+  style A6 fill:#58a6ff,stroke:#1f6feb,color:#0d1117
+  style A7 fill:#58a6ff,stroke:#1f6feb,color:#0d1117
+  style S1 fill:#3fb950,stroke:#238636,color:#0d1117
+  style S2 fill:#3fb950,stroke:#238636,color:#0d1117
+  style S3 fill:#3fb950,stroke:#238636,color:#0d1117
+  style S4 fill:#3fb950,stroke:#238636,color:#0d1117
+  style S5 fill:#3fb950,stroke:#238636,color:#0d1117
+</pre>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- TECH STACK TABLE                        -->
+<!-- ════════════════════════════════════════ -->
+<div class="section">
+<h3>Technology Stack</h3>
+<table class="tech-table">
+<thead>
+  <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Frontend</td>
+    <td><span class="tag tag-ts">Astro SSG</span> <span class="tag tag-ts">TypeScript</span></td>
+    <td>Static site generation — 5 page types, 5,000+ pages at build, &lt;200KB per page, Lighthouse 95+</td>
+  </tr>
+  <tr>
+    <td>Backend API</td>
+    <td><span class="tag tag-py">FastAPI</span> <span class="tag tag-py">Python</span> <span class="tag tag-py">SQLAlchemy async</span> <span class="tag tag-py">asyncpg</span></td>
+    <td>Public REST API, admin endpoints, SSG data feeds, download redirect (302)</td>
+  </tr>
+  <tr>
+    <td>Database</td>
+    <td><span class="tag tag-db">Supabase PostgreSQL</span> <span class="tag tag-db">Alembic</span></td>
+    <td>Primary data store — apps, versions, categories, scans, snapshots. Managed migrations.</td>
+  </tr>
+  <tr>
+    <td>Object Storage</td>
+    <td><span class="tag tag-infra">Cloudflare R2</span></td>
+    <td>Binaries (PC), icons (WebP 256x256), screenshots (WebP max 1200px). CDN at cdn.unstore.io</td>
+  </tr>
+  <tr>
+    <td>Search</td>
+    <td><span class="tag tag-api">Meilisearch</span></td>
+    <td>Full-text search index — name, developer, description. Fallback to PostgreSQL ILIKE</td>
+  </tr>
+  <tr>
+    <td>Cache</td>
+    <td><span class="tag tag-infra">Upstash Redis</span></td>
+    <td>API response cache — 5min app detail TTL, 1min trending TTL</td>
+  </tr>
+  <tr>
+    <td>PC Scraper</td>
+    <td><span class="tag tag-py">httpx async</span> <span class="tag tag-py">BeautifulSoup4</span> <span class="tag tag-py">lxml</span> <span class="tag tag-py">rapidfuzz</span></td>
+    <td>Crawl Softonic + Uptodown, extract metadata, dedup, download binaries</td>
+  </tr>
+  <tr>
+    <td>Android Pipeline</td>
+    <td><span class="tag tag-py">httpx async</span></td>
+    <td>Aptoide internal API ingestion, category mapping, CDN link management</td>
+  </tr>
+  <tr>
+    <td>Content Pipeline</td>
+    <td><span class="tag tag-py">GPT-4o-mini</span> / <span class="tag tag-py">Claude Haiku</span></td>
+    <td>LLM rewriting (200-400 words), quality checks, ~$0.01-0.02 per app</td>
+  </tr>
+  <tr>
+    <td>Security</td>
+    <td><span class="tag tag-api">VirusTotal API v3</span></td>
+    <td>Hash-first scan, file upload fallback. 4 req/min free tier. Blocks flagged downloads.</td>
+  </tr>
+  <tr>
+    <td>Frontend Hosting</td>
+    <td><span class="tag tag-infra">Cloudflare Pages</span></td>
+    <td>Static site deployment at unstore.io, global CDN, Full Strict SSL</td>
+  </tr>
+  <tr>
+    <td>API Hosting</td>
+    <td><span class="tag tag-infra">Railway</span> / <span class="tag tag-infra">Fly.io</span></td>
+    <td>FastAPI backend at api.unstore.io</td>
+  </tr>
+  <tr>
+    <td>CI/CD</td>
+    <td><span class="tag tag-infra">GitHub Actions</span></td>
+    <td>Daily build 03:00 UTC + webhook trigger. Target &lt;10min for 5,000 pages</td>
+  </tr>
+  <tr>
+    <td>Monetisation</td>
+    <td><span class="tag tag-infra">Google AdSense</span></td>
+    <td>Single ad unit on download interstitial page only</td>
+  </tr>
+  <tr>
+    <td>Monitoring</td>
+    <td><span class="tag tag-api">Sentry</span> <span class="tag tag-api">UptimeRobot</span> <span class="tag tag-api">GSC</span> <span class="tag tag-api">Cloudflare Analytics</span></td>
+    <td>Error tracking, 5-min uptime checks, search indexing, privacy-friendly analytics</td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- DOMAIN MAP                              -->
+<!-- ════════════════════════════════════════ -->
+<div class="section">
+<h3>Domain & Network Map</h3>
+<div class="diagram-container">
+<pre class="mermaid">
+%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '13px'}}}%%
+flowchart LR
+  subgraph CF["Cloudflare (DNS + CDN + SSL)"]
+    direction TB
+    D1["<b>unstore.io</b><br/>Cloudflare Pages<br/><i>Static frontend</i>"]
+    D2["<b>api.unstore.io</b><br/>Proxy to Railway/Fly.io<br/><i>FastAPI backend</i>"]
+    D3["<b>cdn.unstore.io</b><br/>Cloudflare R2<br/><i>Binaries, icons, screenshots</i>"]
+  end
+
+  subgraph EXT["External Services"]
+    direction TB
+    E1["Supabase<br/><i>PostgreSQL</i>"]
+    E2["Meilisearch Cloud<br/><i>Search index</i>"]
+    E3["Upstash<br/><i>Redis cache</i>"]
+    E4["VirusTotal<br/><i>Scanning API</i>"]
+    E5["OpenAI / Anthropic<br/><i>LLM rewriting</i>"]
+  end
+
+  D2 --> E1
+  D2 --> E2
+  D2 --> E3
+  D2 --> E4
+  D2 --> E5
+
+  style CF fill:#f97316,stroke:#ea580c,color:#fff
+  style D1 fill:#fff7ed,stroke:#f97316,color:#0d1117
+  style D2 fill:#fff7ed,stroke:#f97316,color:#0d1117
+  style D3 fill:#fff7ed,stroke:#f97316,color:#0d1117
+  style EXT fill:#1e3a5f,stroke:#336791,color:#fff
+  style E1 fill:#336791,stroke:#1e3a5f,color:#fff
+  style E2 fill:#336791,stroke:#1e3a5f,color:#fff
+  style E3 fill:#336791,stroke:#1e3a5f,color:#fff
+  style E4 fill:#336791,stroke:#1e3a5f,color:#fff
+  style E5 fill:#336791,stroke:#1e3a5f,color:#fff
+</pre>
+</div>
+</div>
+
+<div class="section" style="margin-top:40px; padding:16px; background:#161b22; border:1px solid #30363d; border-radius:8px;">
+  <p style="margin:0; font-size:0.85rem; color:#8b949e;">
+    <b style="color:#f0f6fc;">Key design decisions:</b>
+    Fully static frontend (no SSR) for maximum performance and minimal hosting cost.
+    Android APKs are never re-hosted — download links point to Aptoide CDN.
+    Download stats come from scraping, not from tracking user downloads (no download_events table).
+    Single AdSense unit on download interstitial only — no ads on content pages.
+    All binaries are VirusTotal-scanned; flagged binaries are blocked at the API level (403).
+  </p>
+</div>
+
+<script>mermaid.initialize({startOnLoad: true, securityLevel: 'loose', flowchart: {curve: 'basis', padding: 16, nodeSpacing: 20, rankSpacing: 40}, er: {layoutDirection: 'TB'}});</script>
+</body>
+</html>
