@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>unstore.io — Architecture & Dependency Map</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    margin: 0;
+    padding: 24px;
+  }
+  h1 { color: #f0f6fc; font-size: 1.6rem; margin-bottom: 4px; }
+  h2 { color: #8b949e; font-size: 1rem; font-weight: 400; margin-top: 0; }
+  .legend {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    margin: 16px 0 24px; padding: 12px 16px;
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+  .swatch { width: 16px; height: 16px; border-radius: 3px; }
+  .swatch.foundation { background: #da3633; }
+  .swatch.pc-scraper { background: #f0883e; }
+  .swatch.android { background: #3fb950; }
+  .swatch.content { background: #a371f7; }
+  .swatch.backend { background: #58a6ff; }
+  .swatch.frontend { background: #d2a8ff; }
+  .swatch.virustotal { background: #f778ba; }
+  .swatch.infra { background: #79c0ff; }
+  .swatch.analytics { background: #7ee787; }
+  .swatch.blocker { background: transparent; border: 2px solid #da3633; }
+  .diagram-container {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 24px;
+    overflow-x: auto;
+  }
+  .lanes {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0;
+    font-size: 0.85rem;
+  }
+  .lane-header {
+    padding: 10px 12px;
+    font-weight: 600;
+    border-bottom: 1px solid #30363d;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .lane-body {
+    padding: 10px 12px;
+    border-bottom: 1px solid #30363d;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .ticket {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .ticket.blocker { border: 2px solid #da3633; }
+  .ticket.major { border: 1px solid #30363d; opacity: 0.7; }
+  .arrow { color: #484f58; font-size: 1rem; }
+  .section-title { color: #f0f6fc; font-size: 1.1rem; margin: 32px 0 8px; }
+  .note { color: #8b949e; font-size: 0.82rem; margin: 4px 0 16px; }
+</style>
+</head>
+<body>
+
+<h1>unstore.io | Epic DOT-192 — Architecture & Dependency Map</h1>
+<h2>29 User Stories | 15 MVP Blockers (red border) | 14 Post-MVP (dimmed)</h2>
+
+<div class="legend">
+  <div class="legend-item"><div class="swatch foundation"></div> Foundation</div>
+  <div class="legend-item"><div class="swatch pc-scraper"></div> PC Scraper</div>
+  <div class="legend-item"><div class="swatch android"></div> Android Pipeline</div>
+  <div class="legend-item"><div class="swatch content"></div> Content Pipeline</div>
+  <div class="legend-item"><div class="swatch backend"></div> Backend API</div>
+  <div class="legend-item"><div class="swatch frontend"></div> Frontend</div>
+  <div class="legend-item"><div class="swatch virustotal"></div> VirusTotal</div>
+  <div class="legend-item"><div class="swatch infra"></div> Infrastructure</div>
+  <div class="legend-item"><div class="swatch analytics"></div> Analytics</div>
+  <div class="legend-item"><div class="swatch blocker"></div> MVP Blocker</div>
+</div>
+
+<div class="diagram-container">
+<pre class="mermaid">
+%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '13px', 'primaryColor': '#1f2937', 'primaryTextColor': '#f9fafb', 'lineColor': '#6b7280', 'primaryBorderColor': '#374151'}}}%%
+flowchart TD
+
+  %% ═══════════════════════════════════════════
+  %% FOUNDATION — Week 1 start
+  %% ═══════════════════════════════════════════
+  DOT219["<b>DOT-219</b><br/>DB Schema &amp; Migrations<br/>⚡ BLOCKER"]
+  DOT232["<b>DOT-232</b><br/>Cloud Provisioning &amp; DNS<br/>⚡ BLOCKER"]
+
+  %% ═══════════════════════════════════════════
+  %% PC SCRAPER CHAIN
+  %% ═══════════════════════════════════════════
+  DOT210["<b>DOT-210</b><br/>Crawl &amp; URL Discovery<br/>⚡ BLOCKER"]
+  DOT211["<b>DOT-211</b><br/>Detail Extraction &amp; Dedup<br/>⚡ BLOCKER"]
+  DOT212["<b>DOT-212</b><br/>Binary DL, VT &amp; R2<br/>⚡ BLOCKER"]
+  DOT213["<b>DOT-213</b><br/>Scheduling &amp; Resume"]
+
+  %% ═══════════════════════════════════════════
+  %% ANDROID PIPELINE CHAIN
+  %% ═══════════════════════════════════════════
+  DOT214["<b>DOT-214</b><br/>Aptoide API Ingestion<br/>⚡ BLOCKER"]
+  DOT215["<b>DOT-215</b><br/>Category Mapping &amp; Dedup"]
+  DOT216["<b>DOT-216</b><br/>Sync Scheduling &amp; APK Links"]
+
+  %% ═══════════════════════════════════════════
+  %% CONTENT PIPELINE
+  %% ═══════════════════════════════════════════
+  DOT217["<b>DOT-217</b><br/>LLM Batch Rewriting<br/>⚡ BLOCKER"]
+  DOT218["<b>DOT-218</b><br/>QA Checks &amp; Scheduling"]
+
+  %% ═══════════════════════════════════════════
+  %% VIRUSTOTAL
+  %% ═══════════════════════════════════════════
+  DOT234["<b>DOT-234</b><br/>VT Scanning Service<br/>⚡ BLOCKER"]
+  DOT235["<b>DOT-235</b><br/>VT Backend API"]
+  DOT236["<b>DOT-236</b><br/>VT Frontend Display"]
+
+  %% ═══════════════════════════════════════════
+  %% BACKEND API
+  %% ═══════════════════════════════════════════
+  DOT220["<b>DOT-220</b><br/>Public Endpoints<br/>⚡ BLOCKER"]
+  DOT221["<b>DOT-221</b><br/>Download Redirect<br/>⚡ BLOCKER"]
+  DOT222["<b>DOT-222</b><br/>Admin Endpoints"]
+  DOT223["<b>DOT-223</b><br/>SSG Data Endpoints<br/>⚡ BLOCKER"]
+  DOT224["<b>DOT-224</b><br/>Meilisearch Integration"]
+
+  %% ═══════════════════════════════════════════
+  %% ANALYTICS
+  %% ═══════════════════════════════════════════
+  DOT237["<b>DOT-237</b><br/>Download Snapshots &amp; Trending"]
+  DOT238["<b>DOT-238</b><br/>Site Analytics"]
+
+  %% ═══════════════════════════════════════════
+  %% FRONTEND
+  %% ═══════════════════════════════════════════
+  DOT225["<b>DOT-225</b><br/>Homepage<br/>⚡ BLOCKER"]
+  DOT226["<b>DOT-226</b><br/>App Detail Pages<br/>⚡ BLOCKER"]
+  DOT227["<b>DOT-227</b><br/>Category Pages"]
+  DOT228["<b>DOT-228</b><br/>Download Interstitial<br/>⚡ BLOCKER"]
+  DOT229["<b>DOT-229</b><br/>SEO Markup &amp; JSON-LD"]
+  DOT230["<b>DOT-230</b><br/>Build &amp; Deploy Pipeline<br/>⚡ BLOCKER"]
+
+  %% ═══════════════════════════════════════════
+  %% INFRA / SEO
+  %% ═══════════════════════════════════════════
+  DOT231["<b>DOT-231</b><br/>XML Sitemaps &amp; robots.txt"]
+  DOT233["<b>DOT-233</b><br/>Monitoring &amp; Observability"]
+
+  %% ═══════════════════════════════════════════
+  %% DEPENDENCY ARROWS
+  %% ═══════════════════════════════════════════
+
+  %% Foundation feeds everything
+  DOT219 --> DOT210
+  DOT219 --> DOT214
+  DOT219 --> DOT220
+  DOT219 --> DOT221
+  DOT219 --> DOT222
+  DOT219 --> DOT237
+
+  DOT232 --> DOT211
+  DOT232 --> DOT233
+
+  %% PC Scraper chain
+  DOT210 --> DOT211
+  DOT211 --> DOT212
+  DOT212 --> DOT213
+  DOT211 --> DOT217
+  DOT212 --> DOT234
+
+  %% Android Pipeline chain
+  DOT214 --> DOT215
+  DOT215 --> DOT216
+  DOT214 --> DOT217
+  DOT214 --> DOT234
+
+  %% Content Pipeline
+  DOT217 --> DOT218
+
+  %% VirusTotal chain
+  DOT234 --> DOT235
+  DOT235 --> DOT236
+
+  %% Backend API
+  DOT220 --> DOT223
+  DOT220 --> DOT224
+  DOT237 --> DOT220
+
+  %% Frontend depends on backend
+  DOT223 --> DOT225
+  DOT223 --> DOT226
+  DOT223 --> DOT227
+  DOT224 --> DOT225
+  DOT221 --> DOT228
+  DOT236 --> DOT226
+
+  %% Frontend internal
+  DOT226 --> DOT229
+  DOT227 --> DOT229
+  DOT228 --> DOT238
+
+  %% Deploy
+  DOT225 --> DOT230
+  DOT226 --> DOT230
+  DOT228 --> DOT230
+
+  %% SEO / Infra
+  DOT223 --> DOT231
+  DOT230 --> DOT231
+  DOT230 --> DOT233
+
+  %% ═══════════════════════════════════════════
+  %% STYLES
+  %% ═══════════════════════════════════════════
+
+  %% Foundation — red
+  style DOT219 fill:#da3633,stroke:#ff7b72,stroke-width:3px,color:#fff
+  style DOT232 fill:#79c0ff,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+
+  %% PC Scraper — orange
+  style DOT210 fill:#f0883e,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT211 fill:#f0883e,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT212 fill:#f0883e,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT213 fill:#f0883e,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+
+  %% Android — green
+  style DOT214 fill:#3fb950,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT215 fill:#3fb950,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+  style DOT216 fill:#3fb950,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+
+  %% Content — purple
+  style DOT217 fill:#a371f7,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT218 fill:#a371f7,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+
+  %% VirusTotal — pink
+  style DOT234 fill:#f778ba,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT235 fill:#f778ba,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+  style DOT236 fill:#f778ba,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+
+  %% Backend — blue
+  style DOT220 fill:#58a6ff,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT221 fill:#58a6ff,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT222 fill:#58a6ff,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+  style DOT223 fill:#58a6ff,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT224 fill:#58a6ff,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+
+  %% Frontend — light purple
+  style DOT225 fill:#d2a8ff,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT226 fill:#d2a8ff,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT227 fill:#d2a8ff,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+  style DOT228 fill:#d2a8ff,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+  style DOT229 fill:#d2a8ff,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+  style DOT230 fill:#d2a8ff,stroke:#ff7b72,stroke-width:3px,color:#0d1117
+
+  %% Infra / SEO
+  style DOT231 fill:#79c0ff,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+  style DOT233 fill:#79c0ff,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+
+  %% Analytics — green
+  style DOT237 fill:#7ee787,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+  style DOT238 fill:#7ee787,stroke:#30363d,stroke-width:1px,color:#0d1117,stroke-dasharray: 5 5
+</pre>
+</div>
+
+<h3 class="section-title">Parallel Work Streams</h3>
+<p class="note">Recommended team allocation — 4 streams can run simultaneously from day 1 after DOT-219 is done (or in parallel if DB schema is agreed upfront).</p>
+
+<div class="lanes" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden;">
+
+  <div class="lane-header" style="background:#da3633; color:#fff;">Foundation</div>
+  <div class="lane-body">
+    <span class="ticket blocker" style="background:#da3633; color:#fff;">DOT-219 DB Schema</span>
+    <span class="arrow">+</span>
+    <span class="ticket blocker" style="background:#79c0ff; color:#0d1117;">DOT-232 Cloud &amp; DNS</span>
+    <span class="arrow" style="color:#8b949e; margin-left:12px;">Day 1 — parallel, unblock everything</span>
+  </div>
+
+  <div class="lane-header" style="background:#f0883e; color:#0d1117;">Stream A<br/>PC Scraper</div>
+  <div class="lane-body">
+    <span class="ticket blocker" style="background:#f0883e; color:#0d1117;">DOT-210</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket blocker" style="background:#f0883e; color:#0d1117;">DOT-211</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket blocker" style="background:#f0883e; color:#0d1117;">DOT-212</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-213</span>
+    <span class="arrow" style="color:#8b949e; margin-left:12px;">Sequential — 1 engineer</span>
+  </div>
+
+  <div class="lane-header" style="background:#3fb950; color:#0d1117;">Stream B<br/>Android</div>
+  <div class="lane-body">
+    <span class="ticket blocker" style="background:#3fb950; color:#0d1117;">DOT-214</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-215</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-216</span>
+    <span class="arrow" style="color:#8b949e; margin-left:12px;">Sequential — 1 engineer, parallel with Stream A</span>
+  </div>
+
+  <div class="lane-header" style="background:#58a6ff; color:#0d1117;">Stream C<br/>Backend API</div>
+  <div class="lane-body">
+    <span class="ticket blocker" style="background:#58a6ff; color:#0d1117;">DOT-220</span>
+    <span class="arrow">+</span>
+    <span class="ticket blocker" style="background:#58a6ff; color:#0d1117;">DOT-221</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket blocker" style="background:#58a6ff; color:#0d1117;">DOT-223</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-222</span>
+    <span class="arrow">+</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-224</span>
+    <span class="arrow" style="color:#8b949e; margin-left:12px;">1-2 engineers — starts after DOT-219</span>
+  </div>
+
+  <div class="lane-header" style="background:#a371f7; color:#0d1117;">Stream D<br/>Content + VT</div>
+  <div class="lane-body">
+    <span class="ticket blocker" style="background:#a371f7; color:#0d1117;">DOT-217</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-218</span>
+    <span class="arrow">then</span>
+    <span class="ticket blocker" style="background:#f778ba; color:#0d1117;">DOT-234</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-235</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-236</span>
+    <span class="arrow" style="color:#8b949e; margin-left:12px;">1 engineer — waits for data from A/B</span>
+  </div>
+
+  <div class="lane-header" style="background:#d2a8ff; color:#0d1117;">Stream E<br/>Frontend</div>
+  <div class="lane-body">
+    <span class="ticket blocker" style="background:#d2a8ff; color:#0d1117;">DOT-225</span>
+    <span class="arrow">+</span>
+    <span class="ticket blocker" style="background:#d2a8ff; color:#0d1117;">DOT-226</span>
+    <span class="arrow">+</span>
+    <span class="ticket blocker" style="background:#d2a8ff; color:#0d1117;">DOT-228</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-227</span>
+    <span class="arrow">+</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-229</span>
+    <span class="arrow">&rarr;</span>
+    <span class="ticket blocker" style="background:#d2a8ff; color:#0d1117;">DOT-230</span>
+    <span class="arrow" style="color:#8b949e; margin-left:12px;">1-2 engineers — waits for Stream C (SSG endpoints)</span>
+  </div>
+
+  <div class="lane-header" style="background:#7ee787; color:#0d1117;">Stream F<br/>Polish</div>
+  <div class="lane-body">
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-231 Sitemaps</span>
+    <span class="arrow">+</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-233 Monitoring</span>
+    <span class="arrow">+</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-237 Snapshots</span>
+    <span class="arrow">+</span>
+    <span class="ticket major" style="background:#2d333b; color:#8b949e;">DOT-238 Analytics</span>
+    <span class="arrow" style="color:#8b949e; margin-left:12px;">Post-MVP — anyone with bandwidth</span>
+  </div>
+
+</div>
+
+<h3 class="section-title">Critical Path (longest chain)</h3>
+<p class="note">DOT-219 &rarr; DOT-210 &rarr; DOT-211 &rarr; DOT-212 (data ready) &rarr; DOT-217 (content) &rarr; DOT-220 &rarr; DOT-223 (API) &rarr; DOT-226 &rarr; DOT-230 (deploy)</p>
+
+<h3 class="section-title">Parallelisation Opportunities</h3>
+<table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:8px;">
+<thead>
+  <tr style="border-bottom:2px solid #30363d;">
+    <th style="text-align:left; padding:8px; color:#f0f6fc;">Phase</th>
+    <th style="text-align:left; padding:8px; color:#f0f6fc;">Parallel Streams</th>
+    <th style="text-align:left; padding:8px; color:#f0f6fc;">Blocking Gate</th>
+  </tr>
+</thead>
+<tbody>
+  <tr style="border-bottom:1px solid #21262d;">
+    <td style="padding:8px;"><b>Week 1</b></td>
+    <td style="padding:8px;">DOT-219 (DB) + DOT-232 (Infra) + DOT-210 (Crawl URLs, mock DB) + DOT-214 (API auth/mapping)</td>
+    <td style="padding:8px;">DB schema must be agreed before data writes</td>
+  </tr>
+  <tr style="border-bottom:1px solid #21262d;">
+    <td style="padding:8px;"><b>Week 2</b></td>
+    <td style="padding:8px;">DOT-211+212 (PC data) ‖ DOT-215+216 (Android) ‖ DOT-220+221 (Backend API) ‖ DOT-217 (LLM rewriting)</td>
+    <td style="padding:8px;">Backend needs schema; Content needs pending_content apps</td>
+  </tr>
+  <tr style="border-bottom:1px solid #21262d;">
+    <td style="padding:8px;"><b>Weeks 2-3</b></td>
+    <td style="padding:8px;">DOT-223 (SSG) ‖ DOT-234 (VT scanning) ‖ DOT-225+226+228 (Frontend pages)</td>
+    <td style="padding:8px;">Frontend needs SSG endpoints; VT needs file hashes</td>
+  </tr>
+  <tr style="border-bottom:1px solid #21262d;">
+    <td style="padding:8px;"><b>Week 4</b></td>
+    <td style="padding:8px;">DOT-230 (Deploy) + all post-MVP stories</td>
+    <td style="padding:8px;">All blocker pages must render before deploy</td>
+  </tr>
+</tbody>
+</table>
+
+<script>mermaid.initialize({startOnLoad: true, securityLevel: 'loose', flowchart: {curve: 'basis', padding: 16, nodeSpacing: 30, rankSpacing: 50}});</script>
+</body>
+</html>
